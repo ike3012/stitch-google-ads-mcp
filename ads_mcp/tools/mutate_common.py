@@ -88,15 +88,28 @@ def run_mutate(
         applied.
     """
     customer_id = utils.clean_customer_id(customer_id)
+    client = utils.get_googleads_client()
     service = utils.get_googleads_service(service_name)
     mutate_fn = getattr(service, mutate_method)
 
+    # Build the request message explicitly instead of passing validate_only
+    # as a flattened keyword argument. Only customer_id and operations are
+    # guaranteed to be flattened onto a mutate method's signature - some
+    # services (e.g. CampaignService.mutate_campaigns) don't also flatten
+    # validate_only, so passing it as a kwarg raises a TypeError there. A
+    # request object accepts every field regardless of what the generated
+    # method signature flattens.
+    request_type_name = (
+        "".join(part.capitalize() for part in mutate_method.split("_"))
+        + "Request"
+    )
+    request = client.get_type(request_type_name)
+    request.customer_id = customer_id
+    request.operations.extend(operations)
+    request.validate_only = not confirm
+
     try:
-        response = mutate_fn(
-            customer_id=customer_id,
-            operations=operations,
-            validate_only=not confirm,
-        )
+        response = mutate_fn(request=request)
     except GoogleAdsException as ex:
         error_msgs = [
             f"Google Ads API Error: {error.message}"

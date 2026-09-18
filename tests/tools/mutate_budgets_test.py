@@ -44,7 +44,7 @@ class TestSetCampaignBudget(unittest.TestCase):
 
         self.assertTrue(result["preview"])
         _, kwargs = mock_service.mutate_campaign_budgets.call_args
-        operation = kwargs["operations"][0]
+        operation = kwargs["request"].operations[0]
         self.assertEqual(
             operation.update.resource_name, "customers/123/campaignBudgets/789"
         )
@@ -78,7 +78,7 @@ class TestSetKeywordBid(unittest.TestCase):
         )
 
         _, kwargs = mock_service.mutate_ad_group_criteria.call_args
-        operation = kwargs["operations"][0]
+        operation = kwargs["request"].operations[0]
         self.assertEqual(
             operation.update.resource_name,
             "customers/1234567890/adGroupCriteria/111~333",

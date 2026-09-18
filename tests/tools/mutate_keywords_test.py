@@ -53,7 +53,7 @@ class TestAddKeywords(unittest.TestCase):
         )
 
         _, kwargs = mock_service.mutate_ad_group_criteria.call_args
-        ops = kwargs["operations"]
+        ops = list(kwargs["request"].operations)
         self.assertEqual(len(ops), 3)
 
         self.assertEqual(ops[0].create.keyword.text, "running shoes")
@@ -115,7 +115,7 @@ class TestRemoveKeywords(unittest.TestCase):
         )
 
         _, kwargs = mock_service.mutate_ad_group_criteria.call_args
-        ops = kwargs["operations"]
+        ops = list(kwargs["request"].operations)
         self.assertEqual(
             [op.remove for op in ops],
             [

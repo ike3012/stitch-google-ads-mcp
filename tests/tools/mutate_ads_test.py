@@ -48,7 +48,7 @@ class TestCreateResponsiveSearchAd(unittest.TestCase):
         )
 
         _, kwargs = mock_service.mutate_ad_group_ads.call_args
-        operation = kwargs["operations"][0]
+        operation = kwargs["request"].operations[0]
         rsa = operation.create.ad.responsive_search_ad
         self.assertEqual([h.text for h in rsa.headlines], _VALID_HEADLINES)
         self.assertEqual(
@@ -84,7 +84,7 @@ class TestCreateResponsiveSearchAd(unittest.TestCase):
         )
 
         _, kwargs = mock_service.mutate_ad_group_ads.call_args
-        operation = kwargs["operations"][0]
+        operation = kwargs["request"].operations[0]
         self.assertEqual(operation.create.status.name, "PAUSED")
 
     @patch("ads_mcp.utils.get_googleads_service")
@@ -107,7 +107,7 @@ class TestCreateResponsiveSearchAd(unittest.TestCase):
         )
 
         _, kwargs = mock_service.mutate_ad_group_ads.call_args
-        operation = kwargs["operations"][0]
+        operation = kwargs["request"].operations[0]
         self.assertEqual(operation.create.status.name, "ENABLED")
 
     def test_too_few_headlines_rejected(self):

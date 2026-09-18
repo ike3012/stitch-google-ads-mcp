@@ -7,3 +7,11 @@ namespaces:
   customers: true
   search: true
   metadata: true
+  # Write/mutate tools. Every tool in these namespaces defaults to a
+  # validate-only dry run and only applies a change when the caller passes
+  # confirm=True - see ads_mcp/tools/mutate_common.py. Set any of these to
+  # false to disable that category of write access entirely.
+  status: true
+  budgets: true
+  keywords: true
+  ads: true

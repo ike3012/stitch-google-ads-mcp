@@ -38,30 +38,40 @@ class TestCheckEnum(unittest.TestCase):
 
 class TestRunMutate(unittest.TestCase):
     @patch("ads_mcp.utils.get_googleads_service")
+    @patch("ads_mcp.utils.get_googleads_client")
     def test_preview_defaults_to_validate_only_and_applies_nothing(
-        self, mock_get_service
+        self, mock_get_client, mock_get_service
     ):
+        client = real_client()
+        mock_get_client.return_value = client
         mock_service = MagicMock()
         mock_get_service.return_value = mock_service
 
+        operation = client.get_type("CampaignOperation")
         result = mutate_common.run_mutate(
             "CampaignService",
             "mutate_campaigns",
             "1234567890",
-            [MagicMock()],
+            [operation],
             confirm=False,
         )
 
         mock_service.mutate_campaigns.assert_called_once()
         _, kwargs = mock_service.mutate_campaigns.call_args
-        self.assertTrue(kwargs["validate_only"])
-        self.assertEqual(kwargs["customer_id"], "1234567890")
+        request = kwargs["request"]
+        self.assertTrue(request.validate_only)
+        self.assertEqual(request.customer_id, "1234567890")
 
         self.assertTrue(result["preview"])
         self.assertFalse(result["applied"])
 
     @patch("ads_mcp.utils.get_googleads_service")
-    def test_confirm_applies_and_returns_resource_names(self, mock_get_service):
+    @patch("ads_mcp.utils.get_googleads_client")
+    def test_confirm_applies_and_returns_resource_names(
+        self, mock_get_client, mock_get_service
+    ):
+        client = real_client()
+        mock_get_client.return_value = client
         mock_service = MagicMock()
         mock_result = MagicMock()
         mock_result.resource_name = "customers/123/campaigns/456"
@@ -70,17 +80,19 @@ class TestRunMutate(unittest.TestCase):
         )
         mock_get_service.return_value = mock_service
 
+        operation = client.get_type("CampaignOperation")
         result = mutate_common.run_mutate(
             "CampaignService",
             "mutate_campaigns",
             "123-456-7890",
-            [MagicMock()],
+            [operation],
             confirm=True,
         )
 
         _, kwargs = mock_service.mutate_campaigns.call_args
-        self.assertFalse(kwargs["validate_only"])
-        self.assertEqual(kwargs["customer_id"], "1234567890")
+        request = kwargs["request"]
+        self.assertFalse(request.validate_only)
+        self.assertEqual(request.customer_id, "1234567890")
 
         self.assertFalse(result["preview"])
         self.assertTrue(result["applied"])
@@ -90,9 +102,14 @@ class TestRunMutate(unittest.TestCase):
         )
 
     @patch("ads_mcp.utils.get_googleads_service")
-    def test_google_ads_exception_becomes_tool_error(self, mock_get_service):
+    @patch("ads_mcp.utils.get_googleads_client")
+    def test_google_ads_exception_becomes_tool_error(
+        self, mock_get_client, mock_get_service
+    ):
         from google.ads.googleads.errors import GoogleAdsException
 
+        client = real_client()
+        mock_get_client.return_value = client
         mock_service = MagicMock()
         mock_error = MagicMock()
         mock_error.message = "Cannot pause a removed campaign."
@@ -107,12 +124,13 @@ class TestRunMutate(unittest.TestCase):
         mock_service.mutate_campaigns.side_effect = mock_ex
         mock_get_service.return_value = mock_service
 
+        operation = client.get_type("CampaignOperation")
         with self.assertRaises(ToolError) as ctx:
             mutate_common.run_mutate(
                 "CampaignService",
                 "mutate_campaigns",
                 "1234567890",
-                [MagicMock()],
+                [operation],
                 confirm=True,
             )
 

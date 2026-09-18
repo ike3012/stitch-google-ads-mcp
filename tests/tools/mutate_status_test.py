@@ -42,12 +42,13 @@ class TestSetCampaignStatus(unittest.TestCase):
 
         self.assertTrue(result["preview"])
         _, kwargs = mock_service.mutate_campaigns.call_args
-        operation = kwargs["operations"][0]
+        request = kwargs["request"]
+        operation = request.operations[0]
         self.assertEqual(
             operation.update.resource_name, "customers/1234567890/campaigns/999"
         )
         self.assertEqual(operation.update.status.name, "PAUSED")
-        self.assertTrue(kwargs["validate_only"])
+        self.assertTrue(request.validate_only)
 
     def test_invalid_status_raises_before_any_api_call(self):
         with self.assertRaises(ToolError):
@@ -73,7 +74,7 @@ class TestSetAdStatus(unittest.TestCase):
         )
 
         _, kwargs = mock_service.mutate_ad_group_ads.call_args
-        operation = kwargs["operations"][0]
+        operation = kwargs["request"].operations[0]
         self.assertEqual(
             operation.update.resource_name,
             "customers/1234567890/adGroupAds/111~222",
@@ -100,7 +101,7 @@ class TestSetKeywordStatus(unittest.TestCase):
         )
 
         _, kwargs = mock_service.mutate_ad_group_criteria.call_args
-        operation = kwargs["operations"][0]
+        operation = kwargs["request"].operations[0]
         self.assertEqual(
             operation.update.resource_name,
             "customers/1234567890/adGroupCriteria/111~333",

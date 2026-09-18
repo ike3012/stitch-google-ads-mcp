@@ -18,6 +18,39 @@ to provide several
 - `list_accessible_customers`: Returns ids of customers directly accessible
   by the user authenticating the call.
 
+The tools above are read-only. This fork also adds write/mutate tools, split
+across four namespaces:
+
+- `status` - enable, pause, or remove an existing campaign, ad group,
+  keyword, or ad (`set_campaign_status`, `set_ad_group_status`,
+  `set_keyword_status`, `set_ad_status`).
+- `budgets` - change a campaign's daily budget, or a manual CPC bid at the
+  ad group or keyword level (`set_campaign_budget`, `set_ad_group_cpc_bid`,
+  `set_keyword_bid`).
+- `keywords` - add or permanently remove keywords and negative keywords
+  (`add_keywords`, `remove_keywords`).
+- `ads` - create new ad copy (`create_responsive_search_ad`). The Google
+  Ads API does not support editing an existing ad's headlines or
+  descriptions in place, so the pattern is: create a new ad with the copy
+  you want, then pause or remove the old one with `status.set_ad_status`.
+
+**Safety model.** Every write tool takes a `confirm` argument that defaults
+to `False`. With `confirm=False` (the default), the tool sends the request
+to the Google Ads API with `validate_only=true`: the API fully validates
+it - permissions, required fields, entity state - but nothing changes, and
+the tool returns a preview of what would happen. Only a second call with
+`confirm=True` actually applies the change. `create_responsive_search_ad`
+adds a second layer on top of that: it always creates the new ad as
+`PAUSED` unless you also pass `start_paused=False`, so a newly created ad
+never starts serving on its own.
+
+Write access is controlled entirely by which namespaces are enabled in
+`tools_config.yaml` (see below), not by OAuth scope - Google Ads does not
+publish a separate read-only scope, so the `adwords` scope your OAuth app
+already requests covers both. Set any of `status`, `budgets`, `keywords`,
+or `ads` to `false` there to remove that category of write access from a
+given deployment.
+
 ### Configuring and Namespacing Tools
 
 The Google Ads MCP server uses the `tools_config.yaml` to let you selectively enable or disable individual tools or tool categories (namespaces) and customize their namespace prefixes.
